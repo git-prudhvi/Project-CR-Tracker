@@ -22,8 +22,11 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
 const fetchCRs = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/crs`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     const data = await response.json()
-    return data.success ? data.data : []
+    return Array.isArray(data.data) ? data.data : []
   } catch (error) {
     console.error('Error fetching CRs:', error)
     return []
@@ -33,8 +36,11 @@ const fetchCRs = async () => {
 const fetchUsers = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/users`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     const data = await response.json()
-    return data.success ? data.data : mockUsers
+    return Array.isArray(data.data) ? data.data : mockUsers
   } catch (error) {
     console.error('Error fetching users:', error)
     return mockUsers
@@ -84,13 +90,27 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      const [crsData, usersData] = await Promise.all([
-        fetchCRs(),
-        fetchUsers()
-      ])
-      setCRs(crsData)
-      setFilteredCRs(crsData)
-      setLoading(false)
+      try {
+        const [crsData, usersData] = await Promise.all([
+          fetchCRs(),
+          fetchUsers()
+        ])
+        // Ensure crsData is an array and has proper structure
+        const validCRs = Array.isArray(crsData) ? crsData.map(cr => ({
+          ...cr,
+          assignedDevelopers: Array.isArray(cr.assignedDevelopers) ? cr.assignedDevelopers : [],
+          tasks: Array.isArray(cr.tasks) ? cr.tasks : []
+        })) : []
+        
+        setCRs(validCRs)
+        setFilteredCRs(validCRs)
+      } catch (error) {
+        console.error('Error loading data:', error)
+        setCRs([])
+        setFilteredCRs([])
+      } finally {
+        setLoading(false)
+      }
     }
     loadData()
   }, [])
@@ -160,12 +180,16 @@ export default function Dashboard() {
         title: newCR.title,
         description: newCR.description,
         owner_id: newCR.owner.id,
-        assigned_developers: newCR.assignedDevelopers.map(dev => dev.id),
+        assigned_developers: Array.isArray(newCR.assignedDevelopers) 
+          ? newCR.assignedDevelopers.map(dev => dev.id) 
+          : [],
         due_date: newCR.dueDate,
-        tasks: newCR.tasks.map(task => ({
-          description: task.description,
-          assigned_to: task.assignedTo.id
-        }))
+        tasks: Array.isArray(newCR.tasks) 
+          ? newCR.tasks.map(task => ({
+              description: task.description,
+              assigned_to: task.assignedTo.id
+            }))
+          : []
       }
 
       const response = await fetch(`${API_BASE_URL}/api/crs`, {
@@ -176,11 +200,16 @@ export default function Dashboard() {
         body: JSON.stringify(crData),
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
       if (data.success) {
         const refreshedCRs = await fetchCRs()
-        setCRs(refreshedCRs)
-        setFilteredCRs(refreshedCRs)
+        const validCRs = Array.isArray(refreshedCRs) ? refreshedCRs : []
+        setCRs(validCRs)
+        setFilteredCRs(validCRs)
         setShowCreateModal(false)
       } else {
         console.error("Error creating CR:", data.message)
@@ -200,11 +229,16 @@ export default function Dashboard() {
         body: JSON.stringify({ status: updatedCR.status }),
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
       if (data.success) {
         const refreshedCRs = await fetchCRs()
-        setCRs(refreshedCRs)
-        setFilteredCRs(refreshedCRs)
+        const validCRs = Array.isArray(refreshedCRs) ? refreshedCRs : []
+        setCRs(validCRs)
+        setFilteredCRs(validCRs)
         setSelectedCR(null)
       } else {
         console.error("Error updating CR:", data.message)
@@ -328,9 +362,10 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCRs.map((cr) => {
-              const completedTasks = cr.tasks.filter((task) => task.status === "completed").length
-              const totalTasks = cr.tasks.length
+            {Array.isArray(filteredCRs) && filteredCRs.map((cr) => {
+              const tasks = Array.isArray(cr.tasks) ? cr.tasks : []
+              const completedTasks = tasks.filter((task) => task.status === "completed").length
+              const totalTasks = tasks.length
               const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
               return (
