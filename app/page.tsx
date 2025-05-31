@@ -301,10 +301,10 @@ export default function Dashboard() {
               className="bg-green-600 hover:bg-green-700"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add New CR :)
+              Add New CR
             </Button>
             <Button onClick={loadData} variant="outline">
-              Refresh Data *_*
+              Refresh Data
             </Button>
           </div>
         </div>
