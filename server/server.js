@@ -25,6 +25,22 @@ app.use(morgan("combined"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Root endpoint with API information
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "CR Tracker API",
+    version: "1.0.0",
+    endpoints: {
+      health: "/health",
+      crs: "/api/crs",
+      tasks: "/api/tasks",
+      users: "/api/users"
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({
