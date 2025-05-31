@@ -14,15 +14,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? [
-            "https://v0-vo-dev-details-1m68yhymy-gitprudhvis-projects.vercel.app", 
-            "https://v0-vo-dev-details-64s930mto-gitprudhvis-projects.vercel.app",
-            "https://v0-vo-dev-details.vercel.app",
-            "https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev"
-          ]
-        : ["http://localhost:3000", "http://127.0.0.1:3000", "https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev"],
+    origin: "*",
     credentials: true,
   })
 );
@@ -84,7 +76,7 @@ app.use((error, req, res, next) => {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 CR Tracker API running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
 });
 

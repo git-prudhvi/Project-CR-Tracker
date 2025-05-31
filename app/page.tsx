@@ -178,7 +178,9 @@ export default function Dashboard() {
 
       const data = await response.json()
       if (data.success) {
-        await fetchCRs() // Refresh the list
+        const refreshedCRs = await fetchCRs()
+        setCRs(refreshedCRs)
+        setFilteredCRs(refreshedCRs)
         setShowCreateModal(false)
       } else {
         console.error("Error creating CR:", data.message)
@@ -190,7 +192,7 @@ export default function Dashboard() {
 
   const handleUpdateCR = async (updatedCR: ChangeRequest) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/crs/${updatedCR.id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/crs/${updatedCR.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +202,10 @@ export default function Dashboard() {
 
       const data = await response.json()
       if (data.success) {
-        await fetchCRs() // Refresh the list
+        const refreshedCRs = await fetchCRs()
+        setCRs(refreshedCRs)
+        setFilteredCRs(refreshedCRs)
+        setSelectedCR(null)
       } else {
         console.error("Error updating CR:", data.message)
       }

@@ -54,19 +54,19 @@ export const mockUsers: User[] = [
     id: "user-5",
     name: "Shubojit Halder",
     avatar: "/placeholder.svg?height=32&width=32",
-    email: "eva@company.com",
+    email: "shubojit@company.com",
   },
   {
-    id: "user-5",
+    id: "user-6",
     name: "Prinan Sil",
     avatar: "/placeholder.svg?height=32&width=32",
-    email: "eva@company.com",
+    email: "prinan@company.com",
   },
   {
-    id: "user-5",
+    id: "user-7",
     name: "Shreya Singh",
     avatar: "/placeholder.svg?height=32&width=32",
-    email: "eva@company.com",
+    email: "shreya@company.com",
   },
 ];
 
