@@ -1,19 +1,24 @@
+"use client";
 
-"use client"
-
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
-import { Plus, Calendar, AlertTriangle, Edit, Eye, Trash2 } from "lucide-react"
-import { CRCreationModal } from "./components/cr-creation-modal"
-import { CRDetailModal } from "./components/cr-detail-modal"
-import { CREditModal } from "./components/cr-edit-modal"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { Plus, Calendar, AlertTriangle, Edit, Eye, Trash2 } from "lucide-react";
+import { CRCreationModal } from "./components/cr-creation-modal";
+import { CRDetailModal } from "./components/cr-detail-modal";
+import { CREditModal } from "./components/cr-edit-modal";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
   id: string;
@@ -42,72 +47,76 @@ interface ChangeRequest {
   updated_at: string;
 }
 
-const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev'
-  : 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev'
+const API_BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev"
+    : "https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev";
 
 export default function Dashboard() {
-  const [crs, setCRs] = useState<ChangeRequest[]>([])
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [crs, setCRs] = useState<ChangeRequest[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: "",
     search: "",
-  })
+  });
 
   // Modal states
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showDetailModal, setShowDetailModal] = useState<ChangeRequest | null>(null)
-  const [showEditModal, setShowEditModal] = useState<ChangeRequest | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState<ChangeRequest | null>(
+    null,
+  );
+  const [showEditModal, setShowEditModal] = useState<ChangeRequest | null>(
+    null,
+  );
 
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   useEffect(() => {
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   const loadData = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       // Test API connection first
-      const healthResponse = await fetch(`${API_BASE_URL}/health`)
+      const healthResponse = await fetch(`${API_BASE_URL}/health`);
       if (!healthResponse.ok) {
-        throw new Error('Backend server is not responding')
+        throw new Error("Backend server is not responding");
       }
 
       // Fetch users and CRs
       const [usersResponse, crsResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/api/users`),
-        fetch(`${API_BASE_URL}/api/crs`)
-      ])
+        fetch(`${API_BASE_URL}/api/crs`),
+      ]);
 
       if (!usersResponse.ok || !crsResponse.ok) {
-        throw new Error('Failed to fetch data from API')
+        throw new Error("Failed to fetch data from API");
       }
 
-      const usersData = await usersResponse.json()
-      const crsData = await crsResponse.json()
+      const usersData = await usersResponse.json();
+      const crsData = await crsResponse.json();
 
-      setUsers(usersData.data || [])
-      setCRs(crsData.data || [])
-
+      setUsers(usersData.data || []);
+      setCRs(crsData.data || []);
     } catch (err) {
-      console.error('Error loading data:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load data')
+      console.error("Error loading data:", err);
+      setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCreateCR = async (crData: any) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/crs`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: crData.title,
@@ -117,117 +126,136 @@ export default function Dashboard() {
           due_date: crData.dueDate,
           tasks: crData.tasks.map((task: any) => ({
             description: task.description,
-            assigned_to: task.assignedTo
-          }))
+            assigned_to: task.assignedTo,
+          })),
         }),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (result.success) {
         toast({
           title: "Success",
           description: "Change request created successfully",
-        })
-        loadData() // Refresh data
-        setShowCreateModal(false)
+        });
+        loadData(); // Refresh data
+        setShowCreateModal(false);
       } else {
-        throw new Error(result.message || 'Failed to create CR')
+        throw new Error(result.message || "Failed to create CR");
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to create CR',
+        description:
+          error instanceof Error ? error.message : "Failed to create CR",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleUpdateCR = async (updatedCR: ChangeRequest) => {
     try {
       // Update the CR status first
-      const statusResponse = await fetch(`${API_BASE_URL}/api/crs/${updatedCR.id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+      const statusResponse = await fetch(
+        `${API_BASE_URL}/api/crs/${updatedCR.id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: updatedCR.status,
+          }),
         },
-        body: JSON.stringify({
-          status: updatedCR.status
-        }),
-      })
+      );
 
-      const statusResult = await statusResponse.json()
+      const statusResult = await statusResponse.json();
 
       if (statusResult.success) {
         toast({
           title: "Success",
           description: "Change request updated successfully",
-        })
-        loadData() // Refresh data
-        setShowEditModal(null)
-        setShowDetailModal(null)
+        });
+        loadData(); // Refresh data
+        setShowEditModal(null);
+        setShowDetailModal(null);
       } else {
-        throw new Error(statusResult.message || 'Failed to update CR')
+        throw new Error(statusResult.message || "Failed to update CR");
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to update CR',
+        description:
+          error instanceof Error ? error.message : "Failed to update CR",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleDeleteCR = async (crId: string) => {
-    if (!confirm('Are you sure you want to delete this change request? This action cannot be undone.')) {
-      return
+    if (
+      !confirm(
+        "Are you sure you want to delete this change request? This action cannot be undone.",
+      )
+    ) {
+      return;
     }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/crs/${crId}`, {
-        method: 'DELETE',
-      })
+        method: "DELETE",
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (result.success) {
         toast({
           title: "Success",
           description: "Change request deleted successfully",
-        })
-        loadData() // Refresh data
-        setShowDetailModal(null)
+        });
+        loadData(); // Refresh data
+        setShowDetailModal(null);
       } else {
-        throw new Error(result.message || 'Failed to delete CR')
+        throw new Error(result.message || "Failed to delete CR");
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to delete CR',
+        description:
+          error instanceof Error ? error.message : "Failed to delete CR",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
-  const filteredCRs = crs.filter(cr => {
-    if (filters.status && cr.status !== filters.status) return false
-    if (filters.search && !cr.title.toLowerCase().includes(filters.search.toLowerCase())) return false
-    return true
-  })
+  const filteredCRs = crs.filter((cr) => {
+    if (filters.status && cr.status !== filters.status) return false;
+    if (
+      filters.search &&
+      !cr.title.toLowerCase().includes(filters.search.toLowerCase())
+    )
+      return false;
+    return true;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "bg-green-100 text-green-800"
-      case "in-progress": return "bg-blue-100 text-blue-800"
-      case "pending": return "bg-yellow-100 text-yellow-800"
-      case "blocked": return "bg-red-100 text-red-800"
-      default: return "bg-gray-100 text-gray-800"
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "in-progress":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "blocked":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const isOverdue = (dueDate: string) => {
-    return new Date(dueDate) < new Date()
-  }
+    return new Date(dueDate) < new Date();
+  };
 
   if (loading) {
     return (
@@ -237,7 +265,7 @@ export default function Dashboard() {
           <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -251,7 +279,7 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -260,19 +288,23 @@ export default function Dashboard() {
       <header className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Change Request Dashboard</h1>
-            <p className="text-gray-600">Total CRs: {crs.length} | Users: {users.length}</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              FGI Claims Change Request Dashboard
+            </h1>
+            <p className="text-gray-600">
+              Total CRs: {crs.length} | Users: {users.length}
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              onClick={() => setShowCreateModal(true)} 
+            <Button
+              onClick={() => setShowCreateModal(true)}
               className="bg-green-600 hover:bg-green-700"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add New CR
+              Add New CR :)
             </Button>
             <Button onClick={loadData} variant="outline">
-              Refresh Data
+              Refresh Data *_*
             </Button>
           </div>
         </div>
@@ -285,9 +317,19 @@ export default function Dashboard() {
             <Input
               placeholder="Search CRs..."
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, search: e.target.value }))
+              }
             />
-            <Select value={filters.status || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === "all" ? "" : value }))}>
+            <Select
+              value={filters.status || "all"}
+              onValueChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  status: value === "all" ? "" : value,
+                }))
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -299,7 +341,10 @@ export default function Dashboard() {
                 <SelectItem value="blocked">Blocked</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => setFilters({ status: "", search: "" })}>
+            <Button
+              variant="outline"
+              onClick={() => setFilters({ status: "", search: "" })}
+            >
               Clear Filters
             </Button>
           </div>
@@ -315,19 +360,25 @@ export default function Dashboard() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">{crs.filter(cr => cr.status === 'pending').length}</div>
+              <div className="text-2xl font-bold">
+                {crs.filter((cr) => cr.status === "pending").length}
+              </div>
               <div className="text-sm text-gray-600">Pending</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">{crs.filter(cr => cr.status === 'in-progress').length}</div>
+              <div className="text-2xl font-bold">
+                {crs.filter((cr) => cr.status === "in-progress").length}
+              </div>
               <div className="text-sm text-gray-600">In Progress</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">{crs.filter(cr => cr.status === 'completed').length}</div>
+              <div className="text-2xl font-bold">
+                {crs.filter((cr) => cr.status === "completed").length}
+              </div>
               <div className="text-sm text-gray-600">Completed</div>
             </CardContent>
           </Card>
@@ -336,19 +387,29 @@ export default function Dashboard() {
         {/* CR Cards */}
         {filteredCRs.length === 0 ? (
           <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Change Requests Found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Change Requests Found
+            </h3>
             <p className="text-gray-500">No CRs match your current filters.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCRs.map((cr) => {
-              const tasks = cr.tasks || []
-              const completedTasks = tasks.filter(task => task.status === "completed").length
-              const totalTasks = tasks.length
-              const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+              const tasks = cr.tasks || [];
+              const completedTasks = tasks.filter(
+                (task) => task.status === "completed",
+              ).length;
+              const totalTasks = tasks.length;
+              const progressPercentage =
+                totalTasks > 0
+                  ? Math.round((completedTasks / totalTasks) * 100)
+                  : 0;
 
               return (
-                <Card key={cr.id} className="hover:shadow-lg transition-shadow duration-200">
+                <Card
+                  key={cr.id}
+                  className="hover:shadow-lg transition-shadow duration-200"
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2">
@@ -365,17 +426,23 @@ export default function Dashboard() {
                           {cr.owner?.name?.substring(0, 2) || "??"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-gray-600">{cr.owner?.name || "Unknown"}</span>
+                      <span className="text-sm text-gray-600">
+                        {cr.owner?.name || "Unknown"}
+                      </span>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <p className="text-sm text-gray-600 line-clamp-2">{cr.description}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {cr.description}
+                      </p>
 
                       <div>
                         <div className="flex items-center justify-between text-sm mb-1">
                           <span className="text-gray-600">Progress</span>
-                          <span className="font-medium">{progressPercentage}%</span>
+                          <span className="font-medium">
+                            {progressPercentage}%
+                          </span>
                         </div>
                         <Progress value={progressPercentage} className="h-2" />
                       </div>
@@ -389,23 +456,33 @@ export default function Dashboard() {
                       {cr.due_date && (
                         <div className="flex items-center gap-2 text-sm">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className={isOverdue(cr.due_date) ? "text-red-600 font-medium" : "text-gray-600"}>
+                          <span
+                            className={
+                              isOverdue(cr.due_date)
+                                ? "text-red-600 font-medium"
+                                : "text-gray-600"
+                            }
+                          >
                             Due {new Date(cr.due_date).toLocaleDateString()}
                           </span>
-                          {isOverdue(cr.due_date) && <AlertTriangle className="w-4 h-4 text-red-500" />}
+                          {isOverdue(cr.due_date) && (
+                            <AlertTriangle className="w-4 h-4 text-red-500" />
+                          )}
                         </div>
                       )}
 
                       <div className="flex items-center gap-1">
                         <span className="text-sm text-gray-600">Assigned:</span>
-                        {(cr.assignedDevelopers || []).slice(0, 3).map((dev, index) => (
-                          <Avatar key={dev.id} className="w-6 h-6">
-                            <AvatarImage src={dev.avatar} />
-                            <AvatarFallback className="text-xs">
-                              {dev.name?.substring(0, 2) || "??"}
-                            </AvatarFallback>
-                          </Avatar>
-                        ))}
+                        {(cr.assignedDevelopers || [])
+                          .slice(0, 3)
+                          .map((dev, index) => (
+                            <Avatar key={dev.id} className="w-6 h-6">
+                              <AvatarImage src={dev.avatar} />
+                              <AvatarFallback className="text-xs">
+                                {dev.name?.substring(0, 2) || "??"}
+                              </AvatarFallback>
+                            </Avatar>
+                          ))}
                         {(cr.assignedDevelopers || []).length > 3 && (
                           <span className="text-xs text-gray-500">
                             +{(cr.assignedDevelopers || []).length - 3} more
@@ -445,7 +522,7 @@ export default function Dashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              )
+              );
             })}
           </div>
         )}
@@ -479,5 +556,5 @@ export default function Dashboard() {
         />
       )}
     </div>
-  )
+  );
 }
