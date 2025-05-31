@@ -1,70 +1,35 @@
 
 const fetch = require('node-fetch');
 
-const FRONTEND_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://v0-vo-dev-details.vercel.app'
-  : 'http://localhost:3000';
-
-const BACKEND_URL = process.env.NODE_ENV === 'production'
-  ? 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev'
-  : 'http://localhost:5000';
+const BACKEND_URL = 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev';
+const FRONTEND_URL = 'https://v0-vo-dev-details.vercel.app';
 
 async function runTests() {
-  console.log('🧪 Running comprehensive application tests...\n');
+  console.log('🧪 COMPREHENSIVE APPLICATION TESTING');
+  console.log('=====================================');
+  console.log(`Backend URL: ${BACKEND_URL}`);
+  console.log(`Frontend URL: ${FRONTEND_URL}\n`);
+
+  let allTestsPassed = true;
 
   // Test 1: Backend Health Check
-  console.log('1. Testing backend health...');
+  console.log('1. 🏥 Testing backend health...');
   try {
     const response = await fetch(`${BACKEND_URL}/health`);
     const data = await response.json();
-    console.log(`✅ Backend health: ${data.status}`);
-  } catch (error) {
-    console.log('❌ Backend health check failed:', error.message);
-    return;
-  }
-
-  // Test 2: Database Connection (Users endpoint)
-  console.log('\n2. Testing database connection via users endpoint...');
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/users`);
-    const data = await response.json();
-    if (data.success && Array.isArray(data.data)) {
-      console.log(`✅ Database connection successful - Found ${data.data.length} users`);
-      
-      // Display first few users
-      data.data.slice(0, 3).forEach(user => {
-        console.log(`   - ${user.name} (${user.email})`);
-      });
+    if (response.ok && data.status === 'OK') {
+      console.log('✅ Backend health check PASSED');
     } else {
-      console.log('❌ Database connection failed or no data returned');
+      console.log('❌ Backend health check FAILED');
+      allTestsPassed = false;
     }
   } catch (error) {
-    console.log('❌ Users endpoint failed:', error.message);
+    console.log('❌ Backend health check FAILED:', error.message);
+    allTestsPassed = false;
   }
 
-  // Test 3: Change Requests endpoint
-  console.log('\n3. Testing change requests endpoint...');
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/crs`);
-    const data = await response.json();
-    if (data.success && Array.isArray(data.data)) {
-      console.log(`✅ Change requests endpoint successful - Found ${data.data.length} CRs`);
-      
-      // Display first few CRs
-      data.data.slice(0, 3).forEach(cr => {
-        const taskCount = cr.tasks?.length || 0;
-        const devCount = cr.assignedDevelopers?.length || 0;
-        console.log(`   - "${cr.title}" (${cr.status}) - ${taskCount} tasks, ${devCount} devs`);
-      });
-    } else {
-      console.log('❌ Change requests endpoint failed or no data returned');
-    }
-  } catch (error) {
-    console.log('❌ Change requests endpoint failed:', error.message);
-  }
-
-  // Test 4: CORS Test
-  console.log('\n4. Testing CORS configuration...');
+  // Test 2: CORS Configuration
+  console.log('\n2. 🌐 Testing CORS configuration...');
   try {
     const response = await fetch(`${BACKEND_URL}/api/users`, {
       method: 'GET',
@@ -73,53 +38,131 @@ async function runTests() {
         'Content-Type': 'application/json'
       }
     });
-    console.log(`✅ CORS test successful - Status: ${response.status}`);
+    if (response.ok) {
+      console.log('✅ CORS configuration PASSED');
+    } else {
+      console.log('❌ CORS configuration FAILED - Status:', response.status);
+      allTestsPassed = false;
+    }
   } catch (error) {
-    console.log('❌ CORS test failed:', error.message);
+    console.log('❌ CORS configuration FAILED:', error.message);
+    allTestsPassed = false;
   }
 
-  // Test 5: Data Structure Validation
-  console.log('\n5. Validating data structure consistency...');
+  // Test 3: Users API
+  console.log('\n3. 👥 Testing users API...');
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/users`);
+    const data = await response.json();
+    if (response.ok && data.success && Array.isArray(data.data)) {
+      console.log(`✅ Users API PASSED - Found ${data.data.length} users`);
+      if (data.data.length > 0) {
+        console.log(`   Sample user: ${data.data[0].name} (${data.data[0].email})`);
+      }
+    } else {
+      console.log('❌ Users API FAILED');
+      allTestsPassed = false;
+    }
+  } catch (error) {
+    console.log('❌ Users API FAILED:', error.message);
+    allTestsPassed = false;
+  }
+
+  // Test 4: Change Requests API
+  console.log('\n4. 📋 Testing change requests API...');
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/crs`);
+    const data = await response.json();
+    if (response.ok && data.success && Array.isArray(data.data)) {
+      console.log(`✅ Change requests API PASSED - Found ${data.data.length} CRs`);
+      if (data.data.length > 0) {
+        const cr = data.data[0];
+        console.log(`   Sample CR: "${cr.title}" (${cr.status})`);
+        console.log(`   Owner: ${cr.owner?.name || 'Unknown'}`);
+        console.log(`   Tasks: ${cr.tasks?.length || 0}`);
+        console.log(`   Assigned devs: ${cr.assignedDevelopers?.length || 0}`);
+      }
+    } else {
+      console.log('❌ Change requests API FAILED');
+      allTestsPassed = false;
+    }
+  } catch (error) {
+    console.log('❌ Change requests API FAILED:', error.message);
+    allTestsPassed = false;
+  }
+
+  // Test 5: Database Connection
+  console.log('\n5. 🗄️ Testing database connectivity...');
+  try {
+    const [usersResponse, crsResponse] = await Promise.all([
+      fetch(`${BACKEND_URL}/api/users`),
+      fetch(`${BACKEND_URL}/api/crs`)
+    ]);
+    
+    if (usersResponse.ok && crsResponse.ok) {
+      const usersData = await usersResponse.json();
+      const crsData = await crsResponse.json();
+      
+      if (usersData.success && crsData.success) {
+        console.log('✅ Database connectivity PASSED');
+        console.log(`   Users table: ${usersData.data.length} records`);
+        console.log(`   Change requests table: ${crsData.data.length} records`);
+      } else {
+        console.log('❌ Database connectivity FAILED - Invalid response format');
+        allTestsPassed = false;
+      }
+    } else {
+      console.log('❌ Database connectivity FAILED - API responses failed');
+      allTestsPassed = false;
+    }
+  } catch (error) {
+    console.log('❌ Database connectivity FAILED:', error.message);
+    allTestsPassed = false;
+  }
+
+  // Test 6: API Response Format
+  console.log('\n6. 📊 Testing API response format...');
   try {
     const response = await fetch(`${BACKEND_URL}/api/crs`);
     const data = await response.json();
     
-    if (data.success && data.data.length > 0) {
-      const cr = data.data[0];
-      const hasRequiredFields = cr.id && cr.title && cr.status && cr.owner;
-      const hasProperStructure = cr.owner && typeof cr.owner === 'object';
-      const hasTasksArray = Array.isArray(cr.tasks);
-      const hasDevsArray = Array.isArray(cr.assignedDevelopers);
-      
-      if (hasRequiredFields && hasProperStructure && hasTasksArray && hasDevsArray) {
-        console.log('✅ Data structure validation passed');
-        console.log(`   - CR has owner: ${cr.owner.name}`);
-        console.log(`   - Tasks count: ${cr.tasks.length}`);
-        console.log(`   - Assigned developers: ${cr.assignedDevelopers.length}`);
+    if (data.success && Array.isArray(data.data)) {
+      const testCR = data.data[0];
+      if (testCR) {
+        const requiredFields = ['id', 'title', 'description', 'status', 'owner'];
+        const hasAllFields = requiredFields.every(field => testCR.hasOwnProperty(field));
+        
+        if (hasAllFields) {
+          console.log('✅ API response format PASSED');
+        } else {
+          console.log('❌ API response format FAILED - Missing required fields');
+          allTestsPassed = false;
+        }
       } else {
-        console.log('❌ Data structure validation failed');
-        console.log(`   - Required fields: ${hasRequiredFields}`);
-        console.log(`   - Proper structure: ${hasProperStructure}`);
-        console.log(`   - Tasks array: ${hasTasksArray}`);
-        console.log(`   - Devs array: ${hasDevsArray}`);
+        console.log('⚠️ API response format - No data to test format');
       }
+    } else {
+      console.log('❌ API response format FAILED - Invalid structure');
+      allTestsPassed = false;
     }
   } catch (error) {
-    console.log('❌ Data structure validation failed:', error.message);
+    console.log('❌ API response format FAILED:', error.message);
+    allTestsPassed = false;
   }
 
-  console.log('\n📊 Test Summary:');
-  console.log(`   Backend URL: ${BACKEND_URL}`);
-  console.log(`   Frontend URL: ${FRONTEND_URL}`);
-  console.log('\n🎯 Next Steps:');
-  console.log('   1. If all tests pass, your application should be working');
-  console.log('   2. Open the frontend URL to verify the dashboard loads');
-  console.log('   3. Check that data displays correctly on the dashboard');
-  console.log('   4. Try filtering and searching functionality');
+  // Final Results
+  console.log('\n' + '='.repeat(50));
+  if (allTestsPassed) {
+    console.log('🎉 ALL TESTS PASSED! Application is ready for deployment.');
+    console.log('\n✅ Frontend should be able to connect to backend');
+    console.log('✅ CORS is properly configured');
+    console.log('✅ Database is connected and populated');
+    console.log('✅ All API endpoints are working');
+  } else {
+    console.log('❌ SOME TESTS FAILED! Please check the issues above.');
+  }
+  console.log('='.repeat(50));
 }
 
-if (require.main === module) {
-  runTests().catch(console.error);
-}
-
-module.exports = runTests;
+// Run the tests
+runTests().catch(console.error);

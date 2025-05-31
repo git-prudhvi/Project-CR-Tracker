@@ -39,7 +39,7 @@ interface ChangeRequest {
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev'
-  : 'http://localhost:5000'
+  : 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev'
 
 export default function Dashboard() {
   const [crs, setCRs] = useState<ChangeRequest[]>([])
