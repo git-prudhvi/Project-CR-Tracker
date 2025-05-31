@@ -116,21 +116,26 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    let filtered = crs
+    if (!Array.isArray(crs)) {
+      setFilteredCRs([])
+      return
+    }
+
+    let filtered = [...crs]
 
     if (filters.owner) {
-      filtered = filtered.filter((cr) => cr.owner.id === filters.owner)
+      filtered = filtered.filter((cr) => cr?.owner?.id === filters.owner)
     }
 
     if (filters.status) {
-      filtered = filtered.filter((cr) => cr.status === filters.status)
+      filtered = filtered.filter((cr) => cr?.status === filters.status)
     }
 
     if (filters.search) {
       filtered = filtered.filter(
         (cr) =>
-          cr.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-          cr.description.toLowerCase().includes(filters.search.toLowerCase()),
+          cr?.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+          cr?.description?.toLowerCase().includes(filters.search.toLowerCase()),
       )
     }
 
@@ -362,8 +367,11 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.isArray(filteredCRs) && filteredCRs.map((cr) => {
+            {(filteredCRs || []).map((cr) => {
+              if (!cr) return null
+              
               const tasks = Array.isArray(cr.tasks) ? cr.tasks : []
+              const assignedDevelopers = Array.isArray(cr.assignedDevelopers) ? cr.assignedDevelopers : []
               const completedTasks = tasks.filter((task) => task.status === "completed").length
               const totalTasks = tasks.length
               const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
@@ -381,15 +389,17 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <Avatar className="w-6 h-6">
-                        <AvatarImage src={cr.owner.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={cr.owner?.avatar || "/placeholder.svg"} />
                         <AvatarFallback>
-                          {cr.owner.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                          {cr.owner?.name
+                            ? cr.owner.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                            : "??"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-gray-600">{cr.owner.name}</span>
+                      <span className="text-sm text-gray-600">{cr.owner?.name || "Unknown"}</span>
                     </div>
                   </CardHeader>
                   <CardContent>
