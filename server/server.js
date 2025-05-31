@@ -22,7 +22,7 @@ app.use(
             "https://v0-vo-dev-details.vercel.app",
             "https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev"
           ]
-        : ["http://localhost:3000", "http://127.0.0.1:3000"],
+        : ["http://localhost:3000", "http://127.0.0.1:3000", "https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev"],
     credentials: true,
   }),
 );
