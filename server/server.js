@@ -8,6 +8,46 @@ const taskRoutes = require("./routes/taskRoutes");
 const userRoutes = require("./routes/userRoutes");
 
 const app = express();
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'CR Tracker API is running' });
+});
+
+// API Routes
+app.use('/api/crs', crRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/users', userRoutes);
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'CR Tracker API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      crs: '/api/crs',
+      tasks: '/api/tasks',
+      users: '/api/users'
+    }
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 CR Tracker API running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://0.0.0.0:3000'],
+  credentials: true
+}));
+app.use(express.json());
+app.use(morgan('combined'));
 const PORT = process.env.PORT || 5000;
 
 // Middleware

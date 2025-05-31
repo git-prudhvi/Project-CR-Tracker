@@ -26,13 +26,33 @@ export default function Dashboard() {
     search: "",
   })
 
-  useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setCRs(mockCRs)
-      setFilteredCRs(mockCRs)
+  const API_BASE_URL = "http://localhost:5000/api"
+
+  const fetchCRs = async () => {
+    try {
+      setLoading(true)
+      // const response = await fetch(`${API_BASE_URL}/crs`)
+      // const data = await response.json()
+      // if (data.success) {
+      //   setCRs(data.crs)
+      //   setFilteredCRs(data.crs)
+      // } else {
+      //   console.error("Error fetching CRs:", data.message)
+      // }
+      // Simulating API call with mock data
+      setTimeout(() => {
+        setCRs(mockCRs)
+        setFilteredCRs(mockCRs)
+        setLoading(false)
+      }, 1000)
+    } catch (error) {
+      console.error("Error fetching CRs:", error)
       setLoading(false)
-    }, 1000)
+    }
+  }
+
+  useEffect(() => {
+    fetchCRs()
   }, [])
 
   useEffect(() => {
@@ -94,24 +114,64 @@ export default function Dashboard() {
     return diffDays <= 3 && diffDays >= 0
   }
 
-  const handleCreateCR = (newCR: Omit<ChangeRequest, "id" | "createdAt" | "updatedAt">) => {
-    const cr: ChangeRequest = {
-      ...newCR,
-      id: `cr-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  const handleCreateCR = async (newCR: Omit<ChangeRequest, "id" | "createdAt" | "updatedAt">) => {
+    try {
+      const crData = {
+        title: newCR.title,
+        description: newCR.description,
+        owner_id: newCR.owner.id,
+        assigned_developers: newCR.assignedDevelopers.map(dev => dev.id),
+        due_date: newCR.dueDate,
+        tasks: newCR.tasks.map(task => ({
+          description: task.description,
+          assigned_to: task.assignedTo.id
+        }))
+      }
+
+      const response = await fetch(`${API_BASE_URL}/crs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(crData),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        await fetchCRs() // Refresh the list
+        setShowCreateModal(false)
+      } else {
+        console.error("Error creating CR:", data.message)
+      }
+    } catch (error) {
+      console.error("Error creating CR:", error)
     }
-    setCRs((prev) => [cr, ...prev])
-    setShowCreateModal(false)
   }
 
-  const handleUpdateCR = (updatedCR: ChangeRequest) => {
-    setCRs((prev) => prev.map((cr) => (cr.id === updatedCR.id ? updatedCR : cr)))
-    setSelectedCR(null)
+  const handleUpdateCR = async (updatedCR: ChangeRequest) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/crs/${updatedCR.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: updatedCR.status }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        await fetchCRs() // Refresh the list
+      } else {
+        console.error("Error updating CR:", data.message)
+      }
+    } catch (error) {
+      console.error("Error updating CR:", error)
+    }
   }
 
-  const handleDeleteCR = (crId: string) => {
-    setCRs((prev) => prev.filter((cr) => cr.id !== crId))
+  const handleDeleteCR = async (crId: string) => {
+    // Note: You'll need to implement a delete endpoint in your backend
+    // For now, just close the modal
     setSelectedCR(null)
   }
 

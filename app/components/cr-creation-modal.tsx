@@ -12,15 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, X, Calendar } from "lucide-react"
-import { mockUsers, type ChangeRequest, type Task } from "../lib/mock-data"
+import { type ChangeRequest, type Task, type User } from "../lib/mock-data"
 
 interface CRCreationModalProps {
   open: boolean
   onClose: () => void
   onSubmit: (cr: Omit<ChangeRequest, "id" | "createdAt" | "updatedAt">) => void
+  users: User[]
 }
 
-export function CRCreationModal({ open, onClose, onSubmit }: CRCreationModalProps) {
+export function CRCreationModal({ open, onClose, onSubmit, users }: CRCreationModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -41,8 +42,8 @@ export function CRCreationModal({ open, onClose, onSubmit }: CRCreationModalProp
       return
     }
 
-    const owner = mockUsers.find((user) => user.id === formData.assignedDevelopers[0]) || mockUsers[0]
-    const assignedDevs = mockUsers.filter((user) => formData.assignedDevelopers.includes(user.id))
+    const owner = users.find((user) => user.id === formData.assignedDevelopers[0]) || users[0]
+    const assignedDevs = users.filter((user) => formData.assignedDevelopers.includes(user.id))
 
     const cr: Omit<ChangeRequest, "id" | "createdAt" | "updatedAt"> = {
       title: formData.title,
@@ -55,7 +56,7 @@ export function CRCreationModal({ open, onClose, onSubmit }: CRCreationModalProp
         ...task,
         id: `task-${Date.now()}-${index}`,
         status: "not-started" as const,
-        assignedTo: mockUsers.find((user) => user.id === task.assignedTo) || assignedDevs[0],
+        assignedTo: users.find((user) => user.id === task.assignedTo) || assignedDevs[0],
       })),
     }
 
@@ -163,7 +164,7 @@ export function CRCreationModal({ open, onClose, onSubmit }: CRCreationModalProp
                 <SelectValue placeholder="Select developers" />
               </SelectTrigger>
               <SelectContent>
-                {mockUsers.map((user) => (
+                {users.map((user) => (
                   <SelectItem key={user.id} value={user.id} disabled={formData.assignedDevelopers.includes(user.id)}>
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
@@ -185,7 +186,7 @@ export function CRCreationModal({ open, onClose, onSubmit }: CRCreationModalProp
             {formData.assignedDevelopers.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.assignedDevelopers.map((devId) => {
-                  const dev = mockUsers.find((u) => u.id === devId)
+                  const dev = users.find((u) => u.id === devId)
                   return dev ? (
                     <Badge key={devId} variant="secondary" className="flex items-center gap-1">
                       <Avatar className="w-4 h-4">
@@ -227,7 +228,7 @@ export function CRCreationModal({ open, onClose, onSubmit }: CRCreationModalProp
                     </SelectTrigger>
                     <SelectContent>
                       {formData.assignedDevelopers.map((devId) => {
-                        const dev = mockUsers.find((u) => u.id === devId)
+                        const dev = users.find((u) => u.id === devId)
                         return dev ? (
                           <SelectItem key={devId} value={devId}>
                             <div className="flex items-center gap-2">
@@ -258,7 +259,7 @@ export function CRCreationModal({ open, onClose, onSubmit }: CRCreationModalProp
             {formData.tasks.length > 0 && (
               <div className="space-y-2">
                 {formData.tasks.map((task, index) => {
-                  const assignedDev = mockUsers.find((u) => u.id === task.assignedTo)
+                  const assignedDev = users.find((u) => u.id === task.assignedTo)
                   return (
                     <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-white">
                       <div className="flex-1">
