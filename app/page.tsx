@@ -11,8 +11,62 @@ import { Progress } from "@/components/ui/progress"
 import { Plus, Filter, Calendar, AlertTriangle } from "lucide-react"
 import { CRCreationModal } from "./components/cr-creation-modal"
 import { CRDetailModal } from "./components/cr-detail-modal"
-import { mockCRs, mockUsers, type ChangeRequest } from "./lib/mock-data"
+import { mockUsers, type ChangeRequest } from "./lib/mock-data"
 import { Skeleton } from "@/components/ui/skeleton"
+
+// API functions
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://your-backend-url.vercel.app'
+  : 'http://localhost:5000'
+
+const fetchCRs = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/crs`)
+    const data = await response.json()
+    return data.success ? data.data : []
+  } catch (error) {
+    console.error('Error fetching CRs:', error)
+    return []
+  }
+}
+
+const fetchUsers = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/users`)
+    const data = await response.json()
+    return data.success ? data.data : mockUsers
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    return mockUsers
+  }
+}
+
+const createCR = async (crData: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/crs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: crData.title,
+        description: crData.description,
+        owner_id: crData.owner.id,
+        assigned_developers: crData.assignedDevelopers.map((dev: any) => dev.id),
+        due_date: crData.dueDate,
+        tasks: crData.tasks.map((task: any) => ({
+          description: task.description,
+          assigned_to: task.assignedTo.id
+        }))
+      }),
+    })
+    const data = await response.json()
+    return data.success ? data.data : null
+  } catch (error) {
+    console.error('Error creating CR:', error)
+    return null
+  }
+}
 
 export default function Dashboard() {
   const [crs, setCRs] = useState<ChangeRequest[]>([])
@@ -26,33 +80,19 @@ export default function Dashboard() {
     search: "",
   })
 
-  const API_BASE_URL = "http://localhost:5000/api"
-
-  const fetchCRs = async () => {
-    try {
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
       setLoading(true)
-      // const response = await fetch(`${API_BASE_URL}/crs`)
-      // const data = await response.json()
-      // if (data.success) {
-      //   setCRs(data.crs)
-      //   setFilteredCRs(data.crs)
-      // } else {
-      //   console.error("Error fetching CRs:", data.message)
-      // }
-      // Simulating API call with mock data
-      setTimeout(() => {
-        setCRs(mockCRs)
-        setFilteredCRs(mockCRs)
-        setLoading(false)
-      }, 1000)
-    } catch (error) {
-      console.error("Error fetching CRs:", error)
+      const [crsData, usersData] = await Promise.all([
+        fetchCRs(),
+        fetchUsers()
+      ])
+      setCRs(crsData)
+      setFilteredCRs(crsData)
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchCRs()
+    loadData()
   }, [])
 
   useEffect(() => {
@@ -128,7 +168,7 @@ export default function Dashboard() {
         }))
       }
 
-      const response = await fetch(`${API_BASE_URL}/crs`, {
+      const response = await fetch(`${API_BASE_URL}/api/crs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,6 +213,17 @@ export default function Dashboard() {
     // Note: You'll need to implement a delete endpoint in your backend
     // For now, just close the modal
     setSelectedCR(null)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
