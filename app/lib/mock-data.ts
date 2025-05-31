@@ -1,62 +1,74 @@
 export interface User {
-  id: string
-  name: string
-  avatar: string
-  email: string
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
 }
 
 export interface Task {
-  id: string
-  description: string
-  status: "not-started" | "in-progress" | "completed"
-  assignedTo: User
+  id: string;
+  description: string;
+  status: "not-started" | "in-progress" | "completed";
+  assignedTo: User;
 }
 
 export interface ChangeRequest {
-  id: string
-  title: string
-  description: string
-  status: "pending" | "in-progress" | "completed" | "blocked"
-  owner: User
-  assignedDevelopers: User[]
-  dueDate: string
-  tasks: Task[]
-  createdAt: string
-  updatedAt: string
+  id: string;
+  title: string;
+  description: string;
+  status: "pending" | "in-progress" | "completed" | "blocked";
+  owner: User;
+  assignedDevelopers: User[];
+  dueDate: string;
+  tasks: Task[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const mockUsers: User[] = [
   {
     id: "user-1",
-    name: "Alice Johnson",
+    name: "Subhadeep Basu",
     avatar: "/placeholder.svg?height=32&width=32",
     email: "alice@company.com",
   },
   {
     id: "user-2",
-    name: "Bob Smith",
+    name: "Nikith B",
     avatar: "/placeholder.svg?height=32&width=32",
     email: "bob@company.com",
   },
   {
     id: "user-3",
-    name: "Carol Davis",
+    name: "Prudhvi Raj",
     avatar: "/placeholder.svg?height=32&width=32",
     email: "carol@company.com",
   },
   {
     id: "user-4",
-    name: "David Wilson",
+    name: "Sushanth Kumar",
     avatar: "/placeholder.svg?height=32&width=32",
     email: "david@company.com",
   },
   {
     id: "user-5",
-    name: "Eva Martinez",
+    name: "Shubojit Halder",
     avatar: "/placeholder.svg?height=32&width=32",
     email: "eva@company.com",
   },
-]
+  {
+    id: "user-5",
+    name: "Prinan Sil",
+    avatar: "/placeholder.svg?height=32&width=32",
+    email: "eva@company.com",
+  },
+  {
+    id: "user-5",
+    name: "Shreya Singh",
+    avatar: "/placeholder.svg?height=32&width=32",
+    email: "eva@company.com",
+  },
+];
 
 export const mockCRs: ChangeRequest[] = [
   {
@@ -100,7 +112,8 @@ export const mockCRs: ChangeRequest[] = [
   {
     id: "cr-2",
     title: "Dashboard Performance Optimization",
-    description: "Optimize dashboard loading times and implement caching strategies for better user experience.",
+    description:
+      "Optimize dashboard loading times and implement caching strategies for better user experience.",
     status: "pending",
     owner: mockUsers[2],
     assignedDevelopers: [mockUsers[2], mockUsers[3]],
@@ -131,7 +144,8 @@ export const mockCRs: ChangeRequest[] = [
   {
     id: "cr-3",
     title: "Mobile App API Integration",
-    description: "Create REST API endpoints for mobile application integration with proper documentation.",
+    description:
+      "Create REST API endpoints for mobile application integration with proper documentation.",
     status: "completed",
     owner: mockUsers[4],
     assignedDevelopers: [mockUsers[4]],
@@ -168,7 +182,8 @@ export const mockCRs: ChangeRequest[] = [
   {
     id: "cr-4",
     title: "Security Audit Implementation",
-    description: "Conduct comprehensive security audit and implement recommended security measures.",
+    description:
+      "Conduct comprehensive security audit and implement recommended security measures.",
     status: "blocked",
     owner: mockUsers[1],
     assignedDevelopers: [mockUsers[1], mockUsers[3]],
@@ -199,7 +214,8 @@ export const mockCRs: ChangeRequest[] = [
   {
     id: "cr-5",
     title: "Email Notification System",
-    description: "Build automated email notification system for user actions and system events.",
+    description:
+      "Build automated email notification system for user actions and system events.",
     status: "in-progress",
     owner: mockUsers[3],
     assignedDevelopers: [mockUsers[3], mockUsers[4]],
@@ -236,7 +252,8 @@ export const mockCRs: ChangeRequest[] = [
   {
     id: "cr-6",
     title: "Data Export Feature",
-    description: "Allow users to export their data in multiple formats (CSV, PDF, Excel).",
+    description:
+      "Allow users to export their data in multiple formats (CSV, PDF, Excel).",
     status: "pending",
     owner: mockUsers[0],
     assignedDevelopers: [mockUsers[0]],
@@ -264,4 +281,4 @@ export const mockCRs: ChangeRequest[] = [
     createdAt: "2024-01-20T08:20:00Z",
     updatedAt: "2024-01-20T08:20:00Z",
   },
-]
+];
