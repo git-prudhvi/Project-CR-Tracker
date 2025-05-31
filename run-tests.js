@@ -1,6 +1,5 @@
 
-const fetch = require('node-fetch');
-
+// Using built-in fetch API (Node.js 18+)
 const BACKEND_URL = 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev';
 const FRONTEND_URL = 'https://v0-vo-dev-details.vercel.app';
 
