@@ -1,4 +1,3 @@
-
 {
   "name": "cr-tracker-backend",
   "version": "1.0.0",
@@ -10,12 +9,13 @@
     "seed": "node scripts/seedData.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.38.4",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "@supabase/supabase-js": "^2.38.4",
+    "express": "^4.18.2",
     "joi": "^17.11.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "node-fetch": "^2.6.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
