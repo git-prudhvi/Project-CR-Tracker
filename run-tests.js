@@ -1,4 +1,3 @@
-
 // Using built-in fetch API (Node.js 18+)
 const BACKEND_URL = 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev';
 const FRONTEND_URL = 'https://v0-vo-dev-details.vercel.app';
@@ -97,11 +96,11 @@ async function runTests() {
       fetch(`${BACKEND_URL}/api/users`),
       fetch(`${BACKEND_URL}/api/crs`)
     ]);
-    
+
     if (usersResponse.ok && crsResponse.ok) {
       const usersData = await usersResponse.json();
       const crsData = await crsResponse.json();
-      
+
       if (usersData.success && crsData.success) {
         console.log('✅ Database connectivity PASSED');
         console.log(`   Users table: ${usersData.data.length} records`);
@@ -124,13 +123,13 @@ async function runTests() {
   try {
     const response = await fetch(`${BACKEND_URL}/api/crs`);
     const data = await response.json();
-    
+
     if (data.success && Array.isArray(data.data)) {
       const testCR = data.data[0];
       if (testCR) {
         const requiredFields = ['id', 'title', 'description', 'status', 'owner'];
         const hasAllFields = requiredFields.every(field => testCR.hasOwnProperty(field));
-        
+
         if (hasAllFields) {
           console.log('✅ API response format PASSED');
         } else {
