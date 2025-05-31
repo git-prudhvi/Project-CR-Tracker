@@ -1,56 +1,41 @@
 
-const supabase = require('../db/supabase');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const mockUsers = [
   {
-    name: "Alice Johnson",
-    email: "alice@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alice"
+    name: "Subhadeep Basu",
+    email: "subhadeep@company.com",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Subhadeep"
   },
   {
-    name: "Bob Smith",
-    email: "bob@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob"
+    name: "Nikith B",
+    email: "nikith@company.com",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nikith"
   },
   {
-    name: "Carol Davis",
-    email: "carol@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carol"
+    name: "Prudhvi Raj",
+    email: "prudhvi@company.com",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Prudhvi"
   },
   {
-    name: "David Wilson",
-    email: "david@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David"
+    name: "Sushanth Kumar",
+    email: "sushanth@company.com",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sushanth"
   },
   {
-    name: "Eva Martinez",
-    email: "eva@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Eva"
-  },
-  {
-    name: "Frank Brown",
-    email: "frank@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Frank"
-  },
-  {
-    name: "Grace Lee",
-    email: "grace@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Grace"
-  },
-  {
-    name: "Henry Taylor",
-    email: "henry@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Henry"
-  },
-  {
-    name: "Ivy Chen",
-    email: "ivy@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ivy"
-  },
-  {
-    name: "Jack Morgan",
-    email: "jack@company.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jack"
+    name: "Shubojit Halder",
+    email: "shubojit@company.com",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Shubojit"
   }
 ];
 
@@ -127,18 +112,15 @@ async function seedData() {
     console.log('👨‍💻 Assigning developers to CRs...');
     const developerAssignments = [];
     crs.forEach((cr, index) => {
-      // Assign 2-3 random developers to each CR
-      const numDevs = Math.floor(Math.random() * 2) + 2;
-      const assignedDevs = [...users]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, numDevs);
-      
-      assignedDevs.forEach(dev => {
+      // Assign 2-3 developers to each CR
+      const numDevs = Math.min(3, users.length);
+      for (let i = 0; i < numDevs; i++) {
+        const devIndex = (index + i) % users.length;
         developerAssignments.push({
           change_request_id: cr.id,
-          user_id: dev.id
+          user_id: users[devIndex].id
         });
-      });
+      }
     });
 
     const { error: devError } = await supabase
@@ -152,15 +134,15 @@ async function seedData() {
     console.log('📝 Creating sample tasks...');
     const tasks = [];
     crs.forEach((cr, crIndex) => {
-      const taskCount = Math.floor(Math.random() * 3) + 2; // 2-4 tasks per CR
+      const taskCount = 3; // 3 tasks per CR
       const taskStatuses = ['not-started', 'in-progress', 'completed'];
       
       for (let i = 0; i < taskCount; i++) {
         tasks.push({
           change_request_id: cr.id,
           description: `Task ${i + 1} for ${cr.title}`,
-          status: taskStatuses[Math.floor(Math.random() * taskStatuses.length)],
-          assigned_to: users[Math.floor(Math.random() * users.length)].id
+          status: taskStatuses[i % taskStatuses.length],
+          assigned_to: users[i % users.length].id
         });
       }
     });
@@ -173,7 +155,6 @@ async function seedData() {
     console.log(`✅ Created ${tasks.length} tasks`);
 
     console.log('🎉 Data seeding completed successfully!');
-    console.log('\n📊 Summary:');
     console.log(`   Users: ${users.length}`);
     console.log(`   Change Requests: ${crs.length}`);
     console.log(`   Developer Assignments: ${developerAssignments.length}`);

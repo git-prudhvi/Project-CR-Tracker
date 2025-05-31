@@ -1,83 +1,195 @@
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
-require("dotenv").config();
 
-const crRoutes = require("./routes/crRoutes");
-const taskRoutes = require("./routes/taskRoutes");
-const userRoutes = require("./routes/userRoutes");
+const express = require('express');
+const cors = require('cors');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const app = express();
-
 const PORT = process.env.PORT || 5000;
 
+// Supabase setup
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // Middleware
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: '*',
+  credentials: false
+}));
+app.use(express.json());
 
-app.use(morgan("combined"));
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-
-// Root endpoint with API information
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "CR Tracker API",
-    version: "1.0.0",
-    endpoints: {
-      health: "/health",
-      crs: "/api/crs",
-      tasks: "/api/tasks",
-      users: "/api/users"
-    },
-    timestamp: new Date().toISOString(),
-  });
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "CR Tracker API is running",
-    timestamp: new Date().toISOString(),
-  });
+// Get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('name');
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch users',
+      error: error.message
+    });
+  }
 });
 
-// API Routes
-app.use("/api/crs", crRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/users", userRoutes);
+// Get all change requests
+app.get('/api/crs', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('change_requests')
+      .select(`
+        *,
+        owner:users!change_requests_owner_id_fkey(id, name, email, avatar),
+        cr_developers(
+          users(id, name, email, avatar)
+        ),
+        tasks(*)
+      `)
+      .order('created_at', { ascending: false });
 
-// 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Endpoint not found",
-  });
+    if (error) throw error;
+
+    // Transform data
+    const transformedCRs = (data || []).map(cr => ({
+      ...cr,
+      assignedDevelopers: (cr.cr_developers || []).map(cd => cd.users).filter(Boolean)
+    }));
+
+    res.json({
+      success: true,
+      data: transformedCRs
+    });
+  } catch (error) {
+    console.error('Error fetching CRs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch change requests',
+      error: error.message
+    });
+  }
 });
 
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error("Unhandled error:", error);
-  res.status(500).json({
-    success: false,
-    message: "Internal server error",
-    error:
-      process.env.NODE_ENV === "development"
-        ? error.message
-        : "Something went wrong",
-  });
+// Create new CR
+app.post('/api/crs', async (req, res) => {
+  try {
+    const { title, description, owner_id, assigned_developers = [], due_date, tasks = [] } = req.body;
+
+    // Create the change request
+    const { data: cr, error: crError } = await supabase
+      .from('change_requests')
+      .insert({
+        title,
+        description,
+        owner_id,
+        due_date,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (crError) throw crError;
+
+    // Assign developers
+    if (assigned_developers.length > 0) {
+      const developerAssignments = assigned_developers.map(userId => ({
+        change_request_id: cr.id,
+        user_id: userId
+      }));
+
+      const { error: devError } = await supabase
+        .from('cr_developers')
+        .insert(developerAssignments);
+
+      if (devError) console.error('Error assigning developers:', devError);
+    }
+
+    // Create tasks
+    if (tasks.length > 0) {
+      const taskInserts = tasks.map(task => ({
+        change_request_id: cr.id,
+        description: task.description,
+        assigned_to: task.assigned_to,
+        status: 'not-started'
+      }));
+
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .insert(taskInserts);
+
+      if (taskError) console.error('Error creating tasks:', taskError);
+    }
+
+    res.status(201).json({
+      success: true,
+      data: cr,
+      message: 'Change request created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating CR:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create change request',
+      error: error.message
+    });
+  }
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 CR Tracker API running on port ${PORT}`);
-  console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+// Update CR status
+app.patch('/api/crs/:crId/status', async (req, res) => {
+  try {
+    const { crId } = req.params;
+    const { status } = req.body;
+
+    const { data, error } = await supabase
+      .from('change_requests')
+      .update({ 
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', crId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data,
+      message: 'Status updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update status',
+      error: error.message
+    });
+  }
 });
 
-module.exports = app;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+});
