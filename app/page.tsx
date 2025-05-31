@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 // API functions
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://your-backend-url.vercel.app'
+  ? 'https://f967cd42-26d5-422d-8deb-ff6c58b64622-00-7f8ivc75mdzv.pike.replit.dev'
   : 'http://localhost:5000'
 
 const fetchCRs = async () => {
