@@ -12,19 +12,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { X, Calendar } from "lucide-react"
-import { mockUsers, type ChangeRequest } from "../lib/mock-data"
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
+}
+
+interface ChangeRequest {
+  id: string;
+  title: string;
+  description: string;
+  status: "pending" | "in-progress" | "completed" | "blocked";
+  owner: User;
+  assignedDevelopers: User[];
+  due_date: string;
+  tasks: any[];
+  created_at: string;
+  updated_at: string;
+}
 
 interface CREditModalProps {
   cr: ChangeRequest
   onClose: () => void
   onSubmit: (cr: ChangeRequest) => void
+  users?: User[]
 }
 
-export function CREditModal({ cr, onClose, onSubmit }: CREditModalProps) {
+export function CREditModal({ cr, onClose, onSubmit, users = [] }: CREditModalProps) {
   const [formData, setFormData] = useState({
     title: cr.title,
     description: cr.description,
-    dueDate: cr.dueDate,
+    dueDate: cr.due_date,
     status: cr.status,
     assignedDevelopers: cr.assignedDevelopers.map((dev) => dev.id),
   })
@@ -36,7 +55,7 @@ export function CREditModal({ cr, onClose, onSubmit }: CREditModalProps) {
       return
     }
 
-    const assignedDevs = mockUsers.filter((user) => formData.assignedDevelopers.includes(user.id))
+    const assignedDevs = users.filter((user) => formData.assignedDevelopers.includes(user.id))
 
     const updatedCR: ChangeRequest = {
       ...cr,
@@ -44,8 +63,8 @@ export function CREditModal({ cr, onClose, onSubmit }: CREditModalProps) {
       description: formData.description,
       status: formData.status as ChangeRequest["status"],
       assignedDevelopers: assignedDevs,
-      dueDate: formData.dueDate,
-      updatedAt: new Date().toISOString(),
+      due_date: formData.dueDate,
+      updated_at: new Date().toISOString(),
     }
 
     onSubmit(updatedCR)
@@ -136,7 +155,7 @@ export function CREditModal({ cr, onClose, onSubmit }: CREditModalProps) {
                 <SelectValue placeholder="Select developers" />
               </SelectTrigger>
               <SelectContent>
-                {mockUsers.map((user) => (
+                {users.map((user) => (
                   <SelectItem key={user.id} value={user.id} disabled={formData.assignedDevelopers.includes(user.id)}>
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
@@ -158,7 +177,7 @@ export function CREditModal({ cr, onClose, onSubmit }: CREditModalProps) {
             {formData.assignedDevelopers.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.assignedDevelopers.map((devId) => {
-                  const dev = mockUsers.find((u) => u.id === devId)
+                  const dev = users.find((u) => u.id === devId)
                   return dev ? (
                     <Badge key={devId} variant="secondary" className="flex items-center gap-1">
                       <Avatar className="w-4 h-4">

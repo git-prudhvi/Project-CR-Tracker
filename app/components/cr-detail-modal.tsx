@@ -11,7 +11,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ArrowLeft, Edit, Calendar, AlertTriangle, Plus, Trash2, Save, ChevronDown, ChevronUp } from "lucide-react"
 import { CREditModal } from "./cr-edit-modal"
-import { mockUsers, type ChangeRequest, type Task } from "../lib/mock-data"
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
+}
+
+interface Task {
+  id: string;
+  description: string;
+  status: "not-started" | "in-progress" | "completed";
+  assigned_to: string;
+}
+
+interface ChangeRequest {
+  id: string;
+  title: string;
+  description: string;
+  status: "pending" | "in-progress" | "completed" | "blocked";
+  owner: User;
+  assignedDevelopers: User[];
+  due_date: string;
+  tasks: Task[];
+  created_at: string;
+  updated_at: string;
+}
 import { useToast } from "@/hooks/use-toast"
 
 interface CRDetailModalProps {
@@ -90,7 +115,7 @@ export function CRDetailModal({ cr, onClose, onUpdate, onDelete }: CRDetailModal
         id: `task-${Date.now()}`,
         description: newTask.description,
         status: "not-started",
-        assignedTo: mockUsers.find((u) => u.id === newTask.assignedTo) || currentCR.assignedDevelopers[0],
+        assigned_to: newTask.assignedTo,
       }
 
       const updatedCR = {
@@ -219,11 +244,11 @@ export function CRDetailModal({ cr, onClose, onUpdate, onDelete }: CRDetailModal
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <span className="text-sm font-medium">Due Date:</span>
                   <span
-                    className={`text-sm ${isOverdue(currentCR.dueDate) ? "text-red-600 font-medium" : isDueSoon(currentCR.dueDate) ? "text-yellow-600 font-medium" : "text-gray-600"}`}
+                    className={`text-sm ${isOverdue(currentCR.due_date) ? "text-red-600 font-medium" : isDueSoon(currentCR.due_date) ? "text-yellow-600 font-medium" : "text-gray-600"}`}
                   >
-                    {new Date(currentCR.dueDate).toLocaleDateString()}
+                    {new Date(currentCR.due_date).toLocaleDateString()}
                   </span>
-                  {(isOverdue(currentCR.dueDate) || isDueSoon(currentCR.dueDate)) && (
+                  {(isOverdue(currentCR.due_date) || isDueSoon(currentCR.due_date)) && (
                     <AlertTriangle className="w-4 h-4 text-yellow-500" />
                   )}
                 </div>
@@ -320,15 +345,15 @@ export function CRDetailModal({ cr, onClose, onUpdate, onDelete }: CRDetailModal
                           <td className="p-4">
                             <div className="flex items-center gap-2">
                               <Avatar className="w-6 h-6">
-                                <AvatarImage src={task.assignedTo.avatar || "/placeholder.svg"} />
+                                <AvatarImage src={currentCR.assignedDevelopers.find(d => d.id === task.assigned_to)?.avatar || "/placeholder.svg"} />
                                 <AvatarFallback>
-                                  {task.assignedTo.name
-                                    .split(" ")
+                                  {currentCR.assignedDevelopers.find(d => d.id === task.assigned_to)?.name
+                                    ?.split(" ")
                                     .map((n) => n[0])
-                                    .join("")}
+                                    .join("") || "??"}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-sm">{task.assignedTo.name}</span>
+                              <span className="text-sm">{currentCR.assignedDevelopers.find(d => d.id === task.assigned_to)?.name || "Unknown"}</span>
                             </div>
                           </td>
                           <td className="p-4">
@@ -366,15 +391,15 @@ export function CRDetailModal({ cr, onClose, onUpdate, onDelete }: CRDetailModal
 
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
-                        <AvatarImage src={task.assignedTo.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={currentCR.assignedDevelopers.find(d => d.id === task.assigned_to)?.avatar || "/placeholder.svg"} />
                         <AvatarFallback>
-                          {task.assignedTo.name
-                            .split(" ")
+                          {currentCR.assignedDevelopers.find(d => d.id === task.assigned_to)?.name
+                            ?.split(" ")
                             .map((n) => n[0])
-                            .join("")}
+                            .join("") || "??"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-gray-600">{task.assignedTo.name}</span>
+                      <span className="text-sm text-gray-600">{currentCR.assignedDevelopers.find(d => d.id === task.assigned_to)?.name || "Unknown"}</span>
                     </div>
 
                     <Select

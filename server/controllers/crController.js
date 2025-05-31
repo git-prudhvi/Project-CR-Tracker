@@ -230,9 +230,149 @@ const updateCRStatus = async (req, res) => {
   }
 };
 
+// Delete a CR
+const deleteCR = async (req, res) => {
+  try {
+    const { crId } = req.params;
+
+    // First delete related tasks
+    const { error: tasksError } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('change_request_id', crId);
+
+    if (tasksError) console.error('Error deleting tasks:', tasksError);
+
+    // Delete CR developers assignments
+    const { error: devsError } = await supabase
+      .from('cr_developers')
+      .delete()
+      .eq('change_request_id', crId);
+
+    if (devsError) console.error('Error deleting CR developers:', devsError);
+
+    // Finally delete the CR
+    const { data: deletedCR, error } = await supabase
+      .from('change_requests')
+      .delete()
+      .eq('id', crId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (!deletedCR) {
+      return res.status(404).json({
+        success: false,
+        message: 'Change request not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Change request deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting CR:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete change request',
+      error: error.message
+    });
+  }
+};
+
+// Update entire CR
+const updateCR = async (req, res) => {
+  try {
+    const { crId } = req.params;
+    const { title, description, status, due_date, assigned_developers } = req.body;
+
+    // Update the change request
+    const { data: updatedCR, error: crError } = await supabase
+      .from('change_requests')
+      .update({
+        title,
+        description,
+        status,
+        due_date,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', crId)
+      .select()
+      .single();
+
+    if (crError) throw crError;
+
+    if (!updatedCR) {
+      return res.status(404).json({
+        success: false,
+        message: 'Change request not found'
+      });
+    }
+
+    // Update assigned developers if provided
+    if (assigned_developers && Array.isArray(assigned_developers)) {
+      // Delete existing assignments
+      await supabase
+        .from('cr_developers')
+        .delete()
+        .eq('change_request_id', crId);
+
+      // Add new assignments
+      if (assigned_developers.length > 0) {
+        const developerAssignments = assigned_developers.map(userId => ({
+          change_request_id: crId,
+          user_id: userId
+        }));
+
+        const { error: devError } = await supabase
+          .from('cr_developers')
+          .insert(developerAssignments);
+
+        if (devError) console.error('Error updating developers:', devError);
+      }
+    }
+
+    // Fetch the complete updated CR with relations
+    const { data: completeCR, error: fetchError } = await supabase
+      .from('change_requests')
+      .select(`
+        *,
+        owner:users!change_requests_owner_id_fkey(id, name, email, avatar),
+        cr_developers(
+          users(id, name, email, avatar)
+        ),
+        tasks(*)
+      `)
+      .eq('id', crId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    res.json({
+      success: true,
+      data: {
+        ...completeCR,
+        assignedDevelopers: completeCR.cr_developers.map(cd => cd.users)
+      },
+      message: 'Change request updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating CR:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update change request',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllCRs,
   getUserCRs,
   createCR,
-  updateCRStatus
+  updateCRStatus,
+  deleteCR,
+  updateCR
 };

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -8,7 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { Plus, Calendar, AlertTriangle } from "lucide-react"
+import { Plus, Calendar, AlertTriangle, Edit, Eye, Trash2 } from "lucide-react"
+import { CRCreationModal } from "./components/cr-creation-modal"
+import { CRDetailModal } from "./components/cr-detail-modal"
+import { CREditModal } from "./components/cr-edit-modal"
+import { useToast } from "@/hooks/use-toast"
 
 interface User {
   id: string;
@@ -51,6 +56,13 @@ export default function Dashboard() {
     search: "",
   })
 
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState<ChangeRequest | null>(null)
+  const [showEditModal, setShowEditModal] = useState<ChangeRequest | null>(null)
+
+  const { toast } = useToast()
+
   useEffect(() => {
     loadData()
   }, [])
@@ -87,6 +99,113 @@ export default function Dashboard() {
       setError(err instanceof Error ? err.message : 'Failed to load data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateCR = async (crData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/crs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: crData.title,
+          description: crData.description,
+          owner_id: crData.assignedDevelopers[0], // First assigned developer as owner
+          assigned_developers: crData.assignedDevelopers,
+          due_date: crData.dueDate,
+          tasks: crData.tasks.map((task: any) => ({
+            description: task.description,
+            assigned_to: task.assignedTo
+          }))
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Change request created successfully",
+        })
+        loadData() // Refresh data
+        setShowCreateModal(false)
+      } else {
+        throw new Error(result.message || 'Failed to create CR')
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to create CR',
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateCR = async (updatedCR: ChangeRequest) => {
+    try {
+      // Update the CR status first
+      const statusResponse = await fetch(`${API_BASE_URL}/api/crs/${updatedCR.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: updatedCR.status
+        }),
+      })
+
+      const statusResult = await statusResponse.json()
+
+      if (statusResult.success) {
+        toast({
+          title: "Success",
+          description: "Change request updated successfully",
+        })
+        loadData() // Refresh data
+        setShowEditModal(null)
+        setShowDetailModal(null)
+      } else {
+        throw new Error(statusResult.message || 'Failed to update CR')
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to update CR',
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteCR = async (crId: string) => {
+    if (!confirm('Are you sure you want to delete this change request? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/crs/${crId}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Change request deleted successfully",
+        })
+        loadData() // Refresh data
+        setShowDetailModal(null)
+      } else {
+        throw new Error(result.message || 'Failed to delete CR')
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to delete CR',
+        variant: "destructive",
+      })
     }
   }
 
@@ -144,9 +263,18 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-gray-900">Change Request Dashboard</h1>
             <p className="text-gray-600">Total CRs: {crs.length} | Users: {users.length}</p>
           </div>
-          <Button onClick={loadData} className="bg-blue-600 hover:bg-blue-700">
-            Refresh Data
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowCreateModal(true)} 
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New CR
+            </Button>
+            <Button onClick={loadData} variant="outline">
+              Refresh Data
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -284,6 +412,36 @@ export default function Dashboard() {
                           </span>
                         )}
                       </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-between pt-2 border-t">
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowDetailModal(cr)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowEditModal(cr)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteCR(cr.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -292,6 +450,34 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {showCreateModal && (
+        <CRCreationModal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateCR}
+          users={users}
+        />
+      )}
+
+      {showDetailModal && (
+        <CRDetailModal
+          cr={showDetailModal}
+          onClose={() => setShowDetailModal(null)}
+          onUpdate={handleUpdateCR}
+          onDelete={handleDeleteCR}
+        />
+      )}
+
+      {showEditModal && (
+        <CREditModal
+          cr={showEditModal}
+          onClose={() => setShowEditModal(null)}
+          onSubmit={handleUpdateCR}
+          users={users}
+        />
+      )}
     </div>
   )
 }

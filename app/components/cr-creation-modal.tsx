@@ -12,12 +12,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, X, Calendar } from "lucide-react"
-import { type ChangeRequest, type Task, type User } from "../lib/mock-data"
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
+}
+
+interface Task {
+  id: string;
+  description: string;
+  status: "not-started" | "in-progress" | "completed";
+  assignedTo: string;
+}
+
+interface ChangeRequest {
+  id: string;
+  title: string;
+  description: string;
+  status: "pending" | "in-progress" | "completed" | "blocked";
+  owner: User;
+  assignedDevelopers: User[];
+  dueDate: string;
+  tasks: Task[];
+}
 
 interface CRCreationModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (cr: Omit<ChangeRequest, "id" | "createdAt" | "updatedAt">) => void
+  onSubmit: (cr: any) => void
   users: User[]
 }
 
@@ -27,7 +50,7 @@ export function CRCreationModal({ open, onClose, onSubmit, users }: CRCreationMo
     description: "",
     dueDate: "",
     assignedDevelopers: [] as string[],
-    tasks: [] as Omit<Task, "id">[],
+    tasks: [] as { description: string; assignedTo: string }[],
   })
 
   const [newTask, setNewTask] = useState({
@@ -42,22 +65,12 @@ export function CRCreationModal({ open, onClose, onSubmit, users }: CRCreationMo
       return
     }
 
-    const owner = users.find((user) => user.id === formData.assignedDevelopers[0]) || users[0]
-    const assignedDevs = users.filter((user) => formData.assignedDevelopers.includes(user.id))
-
-    const cr: Omit<ChangeRequest, "id" | "createdAt" | "updatedAt"> = {
+    const cr = {
       title: formData.title,
       description: formData.description,
-      status: "pending",
-      owner,
-      assignedDevelopers: assignedDevs,
+      assignedDevelopers: formData.assignedDevelopers,
       dueDate: formData.dueDate,
-      tasks: formData.tasks.map((task, index) => ({
-        ...task,
-        id: `task-${Date.now()}-${index}`,
-        status: "not-started" as const,
-        assignedTo: users.find((user) => user.id === task.assignedTo) || assignedDevs[0],
-      })),
+      tasks: formData.tasks,
     }
 
     onSubmit(cr)
@@ -95,7 +108,7 @@ export function CRCreationModal({ open, onClose, onSubmit, users }: CRCreationMo
     if (newTask.description && newTask.assignedTo) {
       setFormData((prev) => ({
         ...prev,
-        tasks: [...prev.tasks, { ...newTask }],
+        tasks: [...prev.tasks, { description: newTask.description, assignedTo: newTask.assignedTo }],
       }))
       setNewTask({ description: "", assignedTo: "" })
     }
