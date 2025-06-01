@@ -291,6 +291,9 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-gray-900">
               FGI Claims Change Request Dashboard
             </h1>
+            <h3 className="text-2xl font-bold text-gray-900">
+              By - Chennaboina Prudhvi Raj
+            </h3>
             <p className="text-gray-600">
               Total CRs: {crs.length} | Users: {users.length}
             </p>
