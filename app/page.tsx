@@ -291,7 +291,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-gray-900">
               FGI Claims Change Request Dashboard
             </h1>
-            <h3 className="text-2xl font-bold text-gray-900">
+            <h3 className="text-1xl font-italic text-gray-700">
               By - Chennaboina Prudhvi Raj
             </h3>
             <p className="text-gray-600">
