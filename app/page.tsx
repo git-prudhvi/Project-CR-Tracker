@@ -292,7 +292,7 @@ export default function Dashboard() {
               FGI Claims Change Request Dashboard
             </h1>
             <h3 className="text-1xl font-italic text-gray-700">
-              By - Chennaboina Prudhvi Raj
+              By - Chennaboina Prudhvi Raj (Dev)
             </h3>
             <p className="text-gray-600">
               Total CRs: {crs.length} | Users: {users.length}
